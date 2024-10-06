@@ -30,6 +30,7 @@ You can customize these colors, I just picked something at random :P
   - [Config](#config)
   - [Recipes](#recipes)
     - [Jump to markers](#jump-to-markers)
+    - [extra keymaps (co, ct, etc...)](#extra-keymaps-co-ct-etc)
 <!--toc:end-->
 
 
@@ -89,6 +90,35 @@ require("conflict-marker").setup({
     vim.keymap.set("n", "]x", function()
       vim.cmd("/" .. MID)
     end, { buffer = conflict.bufnr })
+  end,
+})
+
+```
+
+### extra keymaps (co, ct, etc...)
+
+
+```lua
+require("conflict-marker").setup({
+  on_attach = function(conflict)
+    local map = function(key, fn)
+      vim.keymap.set("n", key, fn, { buffer = conflict.bufnr })
+    end
+
+    -- or you can map these to <cmd>ChooseOurs<cr>
+
+    map("co", function()
+      conflict:choose_ours()
+    end)
+    map("ct", function()
+      conflict:choose_theirs()
+    end)
+    map("cb", function()
+      conflict:choose_both()
+    end)
+    map("cn", function()
+      conflict:choose_none()
+    end)
   end,
 })
 
