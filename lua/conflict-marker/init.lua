@@ -255,7 +255,7 @@ function M.setup(config)
             local conflict = 0
 
             vim.api.nvim_buf_call(bufnr, function()
-                conflict = vim.fn.search(CONFLICT_MID, "n")
+                conflict = vim.fn.search(CONFLICT_MID, "nc")
             end)
 
             if conflict == 0 then
