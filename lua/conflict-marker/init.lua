@@ -6,6 +6,8 @@ local CONFLICT_START = "^<<<<<<<"
 local CONFLICT_END = "^>>>>>>>"
 local CONFLICT_MID = "^=======$"
 
+local BUF_OPT_CONFLICT = "_conflict_marker_nvim"
+
 ---@class conflict-marker.Conflict
 ---@field bufnr integer
 local Conflict = {}
@@ -15,10 +17,6 @@ local Conflict = {}
 function Conflict:new(obj)
     setmetatable(obj, self)
     self.__index = self
-
-    obj:attach_mappings()
-    obj:apply_hl()
-
     return obj
 end
 
@@ -136,27 +134,37 @@ function Conflict:choose_none()
     vim.api.nvim_buf_set_lines(self.bufnr, from - 1, to, true, {})
 end
 
-function Conflict:apply_hl() end
-
-function Conflict:attach_mappings()
-    vim.keymap.set("n", "co", function()
-        self:choose_ours()
-    end, { buffer = self.bufnr })
-
-    vim.keymap.set("n", "ct", function()
-        self:choose_theirs()
-    end, { buffer = self.bufnr })
-
-    vim.keymap.set("n", "cb", function()
-        self:choose_both()
-    end, { buffer = self.bufnr })
-
-    vim.keymap.set("n", "cn", function()
-        self:choose_none()
-    end, { buffer = self.bufnr })
+---@param fn fun(arg: conflict-marker.Conflict)
+local function from_buffer_opts(fn)
+    local arg = vim.b[BUF_OPT_CONFLICT]
+    if not arg then
+        return
+    end
+    fn(Conflict:new(arg))
 end
 
 function M.setup()
+    vim.api.nvim_create_user_command("ConflictOurs", function()
+        from_buffer_opts(function(conflict)
+            conflict:choose_ours()
+        end)
+    end, {})
+    vim.api.nvim_create_user_command("ConflictTheirs", function()
+        from_buffer_opts(function(conflict)
+            conflict:choose_theirs()
+        end)
+    end, {})
+    vim.api.nvim_create_user_command("ConflictBoth", function()
+        from_buffer_opts(function(conflict)
+            conflict:choose_both()
+        end)
+    end, {})
+    vim.api.nvim_create_user_command("ConflictNone", function()
+        from_buffer_opts(function(conflict)
+            conflict:choose_none()
+        end)
+    end, {})
+
     vim.api.nvim_create_autocmd("BufReadPost", {
         callback = function(ev)
             local bufnr = ev.buf
@@ -170,7 +178,9 @@ function M.setup()
                 return
             end
 
-            Conflict:new({ bufnr = bufnr })
+            ---@type conflict-marker.Conflict
+            local args = { bufnr = bufnr }
+            vim.b[bufnr][BUF_OPT_CONFLICT] = args
         end,
     })
 end
