@@ -6,6 +6,16 @@ The simple git conflict resolver for neovim
 
 ![image](https://github.com/user-attachments/assets/c4478663-0ec3-4f72-9b0d-e4ad98cf5e38)
 
+<details>
+  <summary>quick demo</summary>
+
+
+https://github.com/user-attachments/assets/45c99347-41ad-481a-afa8-c7bfcae4a265
+
+
+
+</details>
+
 
 You can customize these colors, I just picked something at random :P
 
