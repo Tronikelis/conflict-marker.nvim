@@ -6,24 +6,77 @@ local CONFLICT_START = "^<<<<<<<"
 local CONFLICT_END = "^>>>>>>>"
 local CONFLICT_MID = "^=======$"
 
+local HL_CONFLICT_OURS = "ConflictOur"
+local HL_CONFLICT_THEIRS = "ConflictTheirs"
+
+local CONFLICT_NS = "ns_conflict-marker.nvim"
+
 M.BUF_OPT_CONFLICT = "_conflict_marker_nvim"
 
 ---@class conflict-marker.Config
 ---@field on_attach fun(arg: conflict-marker.Conflict)
+---@field highlights boolean
 M.config = {
+    highlights = true,
     on_attach = function() end,
 }
 
 ---@class conflict-marker.Conflict
 ---@field bufnr integer
+---@field ns integer
 local Conflict = {}
 
----@param obj conflict-marker.Conflict
+---@param bufnr integer
 ---@return conflict-marker.Conflict
-function Conflict:new(obj)
+function Conflict:new(bufnr)
+    ---@type conflict-marker.Conflict
+    local obj = {
+        bufnr = bufnr,
+        ns = vim.api.nvim_create_namespace(CONFLICT_NS),
+    }
+
     setmetatable(obj, self)
     self.__index = self
+
     return obj
+end
+
+function Conflict:apply_hl()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+
+    while true do
+        local start, mid, ending = 0, 0, 0
+        self:in_buf(function()
+            start = vim.fn.search(CONFLICT_START, "cW")
+            mid = vim.fn.search(CONFLICT_MID, "cW")
+            ending = vim.fn.search(CONFLICT_END, "cW")
+        end)
+
+        if start == 0 or mid == 0 or ending == 0 then
+            break
+        end
+
+        vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, start - 1, 0, {
+            hl_group = HL_CONFLICT_OURS,
+            hl_eol = true,
+            hl_mode = "combine",
+            end_row = mid - 1,
+        })
+        vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, mid, 0, {
+            hl_group = HL_CONFLICT_THEIRS,
+            hl_eol = true,
+            hl_mode = "combine",
+            end_row = ending,
+        })
+    end
+
+    vim.api.nvim_win_set_cursor(0, cursor)
+end
+
+function Conflict:init()
+    if M.config.highlights then
+        self:apply_hl()
+    end
 end
 
 ---@param fn fun()
@@ -142,17 +195,21 @@ end
 
 ---@param fn fun(arg: conflict-marker.Conflict)
 local function from_buffer_opts(fn)
-    local arg = vim.b[M.BUF_OPT_CONFLICT]
+    ---@type conflict-marker.Conflict
+    local arg = vim.b[0][M.BUF_OPT_CONFLICT]
     if not arg then
         return
     end
-    fn(Conflict:new(arg))
+    fn(Conflict:new(arg.bufnr))
 end
 
 ---@param config conflict-marker.Config?
 function M.setup(config)
     config = config or {}
     M.config = vim.tbl_deep_extend("force", M.config, config)
+
+    vim.api.nvim_set_hl(0, HL_CONFLICT_OURS, { bg = "#1f2e40" })
+    vim.api.nvim_set_hl(0, HL_CONFLICT_THEIRS, { bg = "#072242" })
 
     vim.api.nvim_create_user_command("ConflictOurs", function()
         from_buffer_opts(function(conflict)
@@ -188,11 +245,11 @@ function M.setup(config)
                 return
             end
 
-            ---@type conflict-marker.Conflict
-            local args = { bufnr = bufnr }
-            vim.b[bufnr][M.BUF_OPT_CONFLICT] = args
+            local c = Conflict:new(bufnr)
+            c:init()
 
-            M.config.on_attach(Conflict:new(args))
+            vim.b[bufnr][M.BUF_OPT_CONFLICT] = c
+            M.config.on_attach(c)
         end,
     })
 end
