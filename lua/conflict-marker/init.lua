@@ -11,6 +11,8 @@ local HL_CONFLICT_THEIRS = "ConflictTheirs"
 
 local CONFLICT_NS = "ns_conflict-marker.nvim"
 
+local PRIORITY = vim.highlight.priorities.user
+
 M.BUF_OPT_CONFLICT = "_conflict_marker_nvim"
 
 ---@class conflict-marker.Config
@@ -57,12 +59,14 @@ function Conflict:apply_hl()
         end
 
         vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, start - 1, 0, {
+            priority = PRIORITY,
             hl_group = HL_CONFLICT_OURS,
             hl_eol = true,
             hl_mode = "combine",
             end_row = mid - 1,
         })
         vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, mid, 0, {
+            priority = PRIORITY,
             hl_group = HL_CONFLICT_THEIRS,
             hl_eol = true,
             hl_mode = "combine",
