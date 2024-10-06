@@ -6,7 +6,13 @@ local CONFLICT_START = "^<<<<<<<"
 local CONFLICT_END = "^>>>>>>>"
 local CONFLICT_MID = "^=======$"
 
-local BUF_OPT_CONFLICT = "_conflict_marker_nvim"
+M.BUF_OPT_CONFLICT = "_conflict_marker_nvim"
+
+---@class conflict-marker.Config
+---@field on_attach fun(arg: conflict-marker.Conflict)
+M.config = {
+    on_attach = function() end,
+}
 
 ---@class conflict-marker.Conflict
 ---@field bufnr integer
@@ -136,14 +142,18 @@ end
 
 ---@param fn fun(arg: conflict-marker.Conflict)
 local function from_buffer_opts(fn)
-    local arg = vim.b[BUF_OPT_CONFLICT]
+    local arg = vim.b[M.BUF_OPT_CONFLICT]
     if not arg then
         return
     end
     fn(Conflict:new(arg))
 end
 
-function M.setup()
+---@param config conflict-marker.Config?
+function M.setup(config)
+    config = config or {}
+    M.config = vim.tbl_deep_extend("force", M.config, config)
+
     vim.api.nvim_create_user_command("ConflictOurs", function()
         from_buffer_opts(function(conflict)
             conflict:choose_ours()
@@ -180,7 +190,9 @@ function M.setup()
 
             ---@type conflict-marker.Conflict
             local args = { bufnr = bufnr }
-            vim.b[bufnr][BUF_OPT_CONFLICT] = args
+            vim.b[bufnr][M.BUF_OPT_CONFLICT] = args
+
+            M.config.on_attach(Conflict:new(args))
         end,
     })
 end
