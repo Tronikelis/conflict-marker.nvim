@@ -17,6 +17,7 @@ function Conflict:new(obj)
     self.__index = self
 
     obj:attach_mappings()
+    obj:apply_hl()
 
     return obj
 end
@@ -126,6 +127,17 @@ function Conflict:choose_both()
     end
 end
 
+function Conflict:choose_none()
+    local from, to = self:conflict_range()
+    if not from or not to then
+        return
+    end
+
+    vim.api.nvim_buf_set_lines(self.bufnr, from - 1, to, true, {})
+end
+
+function Conflict:apply_hl() end
+
 function Conflict:attach_mappings()
     vim.keymap.set("n", "co", function()
         self:choose_ours()
@@ -137,6 +149,10 @@ function Conflict:attach_mappings()
 
     vim.keymap.set("n", "cb", function()
         self:choose_both()
+    end, { buffer = self.bufnr })
+
+    vim.keymap.set("n", "cn", function()
+        self:choose_none()
     end, { buffer = self.bufnr })
 end
 
