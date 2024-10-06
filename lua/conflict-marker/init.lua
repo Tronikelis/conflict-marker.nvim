@@ -79,7 +79,20 @@ end
 
 function Conflict:init()
     if M.config.highlights then
+        vim.api.nvim_win_set_hl_ns(0, self.ns)
+
         self:apply_hl()
+
+        --- default diff hl interferes heavily,
+        --- so there is no point in keeping them
+        for _, v in ipairs({
+            "DiffAdd",
+            "DiffChange",
+            "DiffDelete",
+            "DiffText",
+        }) do
+            vim.api.nvim_set_hl(self.ns, v, {})
+        end
     end
 end
 
