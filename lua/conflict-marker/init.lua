@@ -6,7 +6,7 @@ local CONFLICT_START = "^<<<<<<<"
 local CONFLICT_END = "^>>>>>>>"
 local CONFLICT_MID = "^=======$"
 
-local HL_CONFLICT_OURS = "ConflictOur"
+local HL_CONFLICT_OURS = "ConflictOurs"
 local HL_CONFLICT_THEIRS = "ConflictTheirs"
 
 local CONFLICT_NS = "ns_conflict-marker.nvim"
