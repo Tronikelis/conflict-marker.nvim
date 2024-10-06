@@ -23,10 +23,13 @@ You can customize these colors, I just picked something at random :P
 <!--toc:start-->
 - [conflict-marker.nvim](#conflict-markernvim)
   - [Philosophy](#philosophy)
+  - [Features](#features)
   - [User commands](#user-commands)
   - [Highlighting](#highlighting)
     - [Groups](#groups)
   - [Config](#config)
+  - [Recipes](#recipes)
+    - [Jump to markers](#jump-to-markers)
 <!--toc:end-->
 
 
@@ -35,6 +38,11 @@ You can customize these colors, I just picked something at random :P
 - it has to be simple (in fact whole plugin is under 300 lua loc)
 - performance-first (finding conflicts does not load whole buf into extra memory)
 
+
+## Features
+- [x] highlights
+- [x] resolving conflicts
+- [ ] diff3 style (FYI I currently don't have this enabled myself)
 
 ## User commands
 
@@ -60,8 +68,28 @@ conflict, because those groups interfere heavily with `conflict-marker.nvim` hig
 
 ```lua
 require("conflict-marker").setup({
-    highlights = true,
-    on_attach = function() end,
+  highlights = true,
+  on_attach = function(conflict) end,
 })
 ```
 
+## Recipes
+
+### Jump to markers
+
+```lua
+require("conflict-marker").setup({
+  on_attach = function(conflict)
+    local MID = "^=======$"
+
+    vim.keymap.set("n", "[x", function()
+      vim.cmd("?" .. MID)
+    end, { buffer = conflict.bufnr })
+
+    vim.keymap.set("n", "]x", function()
+      vim.cmd("/" .. MID)
+    end, { buffer = conflict.bufnr })
+  end,
+})
+
+```
