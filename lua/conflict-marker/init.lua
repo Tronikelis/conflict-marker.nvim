@@ -13,8 +13,6 @@ local CONFLICT_NS = "ns_conflict-marker.nvim"
 
 local PRIORITY = vim.highlight.priorities.user
 
-M.BUF_OPT_CONFLICT = "_conflict_marker_nvim"
-
 ---@class conflict-marker.Config
 ---@field on_attach fun(arg: conflict-marker.Conflict)
 ---@field highlights boolean
@@ -94,6 +92,19 @@ function Conflict:init()
             vim.api.nvim_set_hl(self.ns, v, {})
         end
     end
+
+    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictOurs", function()
+        self:choose_ours()
+    end, {})
+    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictTheirs", function()
+        self:choose_theirs()
+    end, {})
+    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictBoth", function()
+        self:choose_both()
+    end, {})
+    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictNone", function()
+        self:choose_none()
+    end, {})
 end
 
 ---@param fn fun()
@@ -210,16 +221,6 @@ function Conflict:choose_none()
     vim.api.nvim_buf_set_lines(self.bufnr, from - 1, to, true, {})
 end
 
----@param fn fun(arg: conflict-marker.Conflict)
-local function from_buffer_opts(fn)
-    ---@type conflict-marker.Conflict
-    local arg = vim.b[0][M.BUF_OPT_CONFLICT]
-    if not arg then
-        return
-    end
-    fn(Conflict:new(arg.bufnr))
-end
-
 ---@param config conflict-marker.Config?
 function M.setup(config)
     config = config or {}
@@ -227,27 +228,6 @@ function M.setup(config)
 
     vim.api.nvim_set_hl(0, HL_CONFLICT_OURS, { bg = "#1f2e40" })
     vim.api.nvim_set_hl(0, HL_CONFLICT_THEIRS, { bg = "#072242" })
-
-    vim.api.nvim_create_user_command("ConflictOurs", function()
-        from_buffer_opts(function(conflict)
-            conflict:choose_ours()
-        end)
-    end, {})
-    vim.api.nvim_create_user_command("ConflictTheirs", function()
-        from_buffer_opts(function(conflict)
-            conflict:choose_theirs()
-        end)
-    end, {})
-    vim.api.nvim_create_user_command("ConflictBoth", function()
-        from_buffer_opts(function(conflict)
-            conflict:choose_both()
-        end)
-    end, {})
-    vim.api.nvim_create_user_command("ConflictNone", function()
-        from_buffer_opts(function(conflict)
-            conflict:choose_none()
-        end)
-    end, {})
 
     vim.api.nvim_create_autocmd("BufReadPost", {
         callback = function(ev)
@@ -264,8 +244,6 @@ function M.setup(config)
 
             local c = Conflict:new(bufnr)
             c:init()
-
-            vim.b[bufnr][M.BUF_OPT_CONFLICT] = c
             M.config.on_attach(c)
         end,
     })
