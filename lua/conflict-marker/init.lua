@@ -56,20 +56,12 @@ function Conflict:apply_hl()
             break
         end
 
-        vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, start - 1, 0, {
-            priority = PRIORITY,
-            hl_group = HL_CONFLICT_OURS,
-            hl_eol = true,
-            hl_mode = "combine",
-            end_row = mid - 1,
-        })
-        vim.api.nvim_buf_set_extmark(self.bufnr, self.ns, mid, 0, {
-            priority = PRIORITY,
-            hl_group = HL_CONFLICT_THEIRS,
-            hl_eol = true,
-            hl_mode = "combine",
-            end_row = ending,
-        })
+        for i = start - 1, mid - 2 do
+            vim.api.nvim_buf_add_highlight(self.bufnr, self.ns, HL_CONFLICT_OURS, i, 0, -1)
+        end
+        for i = mid, ending - 1 do
+            vim.api.nvim_buf_add_highlight(self.bufnr, self.ns, HL_CONFLICT_THEIRS, i, 0, -1)
+        end
     end
 
     vim.api.nvim_win_set_cursor(0, cursor)
@@ -78,8 +70,6 @@ end
 function Conflict:init()
     if M.config.highlights then
         vim.api.nvim_win_set_hl_ns(0, self.ns)
-
-        self:apply_hl()
 
         --- default diff hl interferes heavily,
         --- so there is no point in keeping them
@@ -91,6 +81,8 @@ function Conflict:init()
         }) do
             vim.api.nvim_set_hl(self.ns, v, {})
         end
+
+        self:apply_hl()
     end
 
     vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictOurs", function()
@@ -226,8 +218,20 @@ function M.setup(config)
     config = config or {}
     M.config = vim.tbl_deep_extend("force", M.config, config)
 
-    vim.api.nvim_set_hl(0, HL_CONFLICT_OURS, { bg = "#1f2e40" })
-    vim.api.nvim_set_hl(0, HL_CONFLICT_THEIRS, { bg = "#072242" })
+    local diff_add = vim.api.nvim_get_hl(0, { name = "DiffAdd" })
+    diff_add.bg = string.format("#%x", diff_add.bg)
+
+    local diff_del = vim.api.nvim_get_hl(0, { name = "DiffChange" })
+    diff_del.bg = string.format("#%x", diff_del.bg)
+
+    vim.api.nvim_set_hl(0, HL_CONFLICT_OURS, {
+        default = true,
+        bg = diff_add.bg,
+    })
+    vim.api.nvim_set_hl(0, HL_CONFLICT_THEIRS, {
+        default = true,
+        bg = diff_del.bg,
+    })
 
     vim.api.nvim_create_autocmd("BufReadPost", {
         callback = function(ev)
