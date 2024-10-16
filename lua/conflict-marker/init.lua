@@ -11,8 +11,6 @@ local HL_CONFLICT_THEIRS = "ConflictTheirs"
 
 local CONFLICT_NS = "ns_conflict-marker.nvim"
 
-local PRIORITY = vim.highlight.priorities.user
-
 ---@class conflict-marker.Config
 ---@field on_attach fun(arg: conflict-marker.Conflict)
 ---@field highlights boolean
@@ -233,22 +231,32 @@ function M.setup(config)
         bg = diff_del.bg,
     })
 
+    ---@param bufnr integer
+    local function check_file(bufnr)
+        local conflict = 0
+
+        vim.api.nvim_buf_call(bufnr, function()
+            conflict = vim.fn.search(CONFLICT_MID, "nc")
+        end)
+
+        if conflict == 0 then
+            return
+        end
+
+        local c = Conflict:new(bufnr)
+        c:init()
+        M.config.on_attach(c)
+    end
+
+    -- if we were lazy loaded
+    if vim.api.nvim_buf_is_loaded(0) then
+        local bufnr = vim.api.nvim_get_current_buf()
+        check_file(bufnr)
+    end
+
     vim.api.nvim_create_autocmd("BufReadPost", {
         callback = function(ev)
-            local bufnr = ev.buf
-            local conflict = 0
-
-            vim.api.nvim_buf_call(bufnr, function()
-                conflict = vim.fn.search(CONFLICT_MID, "nc")
-            end)
-
-            if conflict == 0 then
-                return
-            end
-
-            local c = Conflict:new(bufnr)
-            c:init()
-            M.config.on_attach(c)
+            check_file(ev.buf)
         end,
     })
 end
