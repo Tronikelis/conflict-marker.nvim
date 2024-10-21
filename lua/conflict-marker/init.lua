@@ -217,10 +217,7 @@ function M.setup(config)
     M.config = vim.tbl_deep_extend("force", M.config, config)
 
     local diff_add = vim.api.nvim_get_hl(0, { name = "DiffAdd" })
-    diff_add.bg = string.format("#%x", diff_add.bg)
-
     local diff_del = vim.api.nvim_get_hl(0, { name = "DiffChange" })
-    diff_del.bg = string.format("#%x", diff_del.bg)
 
     vim.api.nvim_set_hl(0, HL_CONFLICT_OURS, {
         default = true,
