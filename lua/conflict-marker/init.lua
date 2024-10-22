@@ -83,18 +83,35 @@ function Conflict:init()
         self:apply_hl()
     end
 
-    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictOurs", function()
-        self:choose_ours()
-    end, {})
-    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictTheirs", function()
-        self:choose_theirs()
-    end, {})
-    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictBoth", function()
-        self:choose_both()
-    end, {})
-    vim.api.nvim_buf_create_user_command(self.bufnr, "ConflictNone", function()
-        self:choose_none()
-    end, {})
+    local choice_map = {
+        ours = function()
+            self:choose_ours()
+        end,
+        theirs = function()
+            self:choose_theirs()
+        end,
+        both = function()
+            self:choose_both()
+        end,
+        none = function()
+            self:choose_none()
+        end,
+    }
+
+    vim.api.nvim_buf_create_user_command(self.bufnr, "Conflict", function(ev)
+        local choice = choice_map[ev.fargs[1]]
+        if not choice then
+            print("unknown command")
+            return
+        end
+
+        choice()
+    end, {
+        nargs = 1,
+        complete = function()
+            return vim.tbl_keys(choice_map)
+        end,
+    })
 end
 
 ---@param fn fun()

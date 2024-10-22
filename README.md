@@ -47,10 +47,10 @@ You can customize these colors, I just picked something at random :P
 
 ## User commands
 
-- `ConflictOurs`: resolves the conflict under the cursor with our changes
-- `ConflictTheirs`: resolves the conflict under the cursor with their changes
-- `ConflictBoth`: resolves the conflict under the cursor with both changes (removes markers)
-- `ConflictNone`: resolves the conflict the best way possible, just removing it xd
+- `Conflict ours`: resolves the conflict under the cursor with our changes
+- `Conflict theirs`: resolves the conflict under the cursor with their changes
+- `Conflict both`: resolves the conflict under the cursor with both changes (removes markers)
+- `Conflict none`: resolves the conflict the best way possible, just removing it xd
 
 ## Highlighting
 
