@@ -1,0 +1,15 @@
+name: ci
+
+on:
+  push
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloning repo
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: "./run_tests.sh"
+
