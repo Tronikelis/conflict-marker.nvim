@@ -10,6 +10,9 @@ jobs:
       - name: Cloning repo
         uses: actions/checkout@v4
 
+      - name: Build test image
+        run: "cd test && docker build -t tronikel/conflict-marker.nvim-test ."
+
       - name: Run tests
         run: "./run_tests.sh"
 
