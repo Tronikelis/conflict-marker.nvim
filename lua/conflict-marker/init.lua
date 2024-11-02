@@ -5,6 +5,7 @@ local M = {}
 local CONFLICT_START = "^<<<<<<<"
 local CONFLICT_END = "^>>>>>>>"
 local CONFLICT_MID = "^=======$"
+local CONFLICT_BASE = "^|||||||"
 
 local HL_CONFLICT_OURS = "ConflictOurs"
 local HL_CONFLICT_THEIRS = "ConflictTheirs"
@@ -144,7 +145,7 @@ function Conflict:conflict_range()
     end)
 
     if from == 0 or to == 0 then
-        return nil, nil
+        return
     end
 
     self:in_buf(function()
@@ -161,47 +162,71 @@ function Conflict:conflict_range()
     end)
 
     if not in_range then
-        return nil, nil
+        return
     end
 
     return from, to
 end
 
 function Conflict:choose_ours()
-    local from, to = self:conflict_range()
+    local from, to = self:conflict_range_without_base()
     if not from or not to then
         return
     end
 
     local start = utils.target_in_range(from, to, self:two_way_search(CONFLICT_START))
-    local ending = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
-    if not start or not ending then
+    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
+    if not start or not mid then
         return
     end
 
     vim.api.nvim_buf_set_lines(self.bufnr, start - 1, start, true, {})
     -- offset by -1 because we deleted one line above
-    vim.api.nvim_buf_set_lines(self.bufnr, ending - 2, to - 1, true, {})
+    vim.api.nvim_buf_set_lines(self.bufnr, mid - 2, to - 1, true, {})
 end
 
 function Conflict:choose_theirs()
+    local from, to = self:conflict_range_without_base()
+    if not from or not to then
+        return
+    end
+
+    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
+    local ending = utils.target_in_range(from, to, self:two_way_search(CONFLICT_END))
+    if not mid or not ending then
+        return
+    end
+
+    vim.api.nvim_buf_set_lines(self.bufnr, ending - 1, ending, true, {})
+    vim.api.nvim_buf_set_lines(self.bufnr, from - 1, mid, true, {})
+end
+
+---@return integer?, integer?
+function Conflict:conflict_range_without_base()
     local from, to = self:conflict_range()
     if not from or not to then
         return
     end
 
-    local start = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
-    local ending = utils.target_in_range(from, to, self:two_way_search(CONFLICT_END))
-    if not start or not ending then
+    local base = utils.target_in_range(from, to, self:two_way_search(CONFLICT_BASE))
+    if not base then
+        return from, to
+    end
+
+    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
+    if not mid then
         return
     end
 
-    vim.api.nvim_buf_set_lines(self.bufnr, ending - 1, ending, true, {})
-    vim.api.nvim_buf_set_lines(self.bufnr, from - 1, start, true, {})
+    vim.api.nvim_buf_set_lines(self.bufnr, base - 1, mid - 1, true, {})
+
+    to = to - (mid - base)
+
+    return from, to
 end
 
 function Conflict:choose_both()
-    local from, to = self:conflict_range()
+    local from, to = self:conflict_range_without_base()
     if not from or not to then
         return
     end
@@ -220,7 +245,7 @@ function Conflict:choose_both()
 end
 
 function Conflict:choose_none()
-    local from, to = self:conflict_range()
+    local from, to = self:conflict_range_without_base()
     if not from or not to then
         return
     end

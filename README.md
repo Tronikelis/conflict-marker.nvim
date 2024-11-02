@@ -43,7 +43,7 @@ You can customize these colors, I just picked something at random :P
 ## Features
 - [x] highlights
 - [x] resolving conflicts
-- [ ] diff3 style (FYI I currently don't have this enabled myself)
+- [x] diff3 style
 
 ## User commands
 
