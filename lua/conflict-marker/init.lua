@@ -209,12 +209,11 @@ function Conflict:conflict_range_without_base()
     end
 
     local base = utils.target_in_range(from, to, self:two_way_search(CONFLICT_BASE))
-    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
-
     if not base then
         return from, to
     end
 
+    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
     if not mid then
         return
     end
