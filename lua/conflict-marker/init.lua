@@ -191,14 +191,14 @@ function Conflict:choose_theirs()
         return
     end
 
-    local start = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
+    local mid = utils.target_in_range(from, to, self:two_way_search(CONFLICT_MID))
     local ending = utils.target_in_range(from, to, self:two_way_search(CONFLICT_END))
-    if not start or not ending then
+    if not mid or not ending then
         return
     end
 
     vim.api.nvim_buf_set_lines(self.bufnr, ending - 1, ending, true, {})
-    vim.api.nvim_buf_set_lines(self.bufnr, from - 1, start, true, {})
+    vim.api.nvim_buf_set_lines(self.bufnr, from - 1, mid, true, {})
 end
 
 ---@return integer?, integer?
